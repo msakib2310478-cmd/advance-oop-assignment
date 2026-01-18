@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Fasting Log - Technical Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 40px 50px;
+            background: #fff;
+        }
+        h1 {
+            color: #1a1a2e;
+            font-size: 28px;
+            text-align: center;
+            margin-bottom: 5px;
+            border-bottom: 3px solid #6366f1;
+            padding-bottom: 15px;
+        }
+        h2 {
+            color: #6366f1;
+            font-size: 14px;
+            text-align: center;
+            font-weight: normal;
+            margin-bottom: 30px;
+        }
+        .meta {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+        .meta p {
+            margin: 5px 0;
+        }
+        h3 {
+            color: #1a1a2e;
+            font-size: 20px;
+            margin-top: 35px;
+            margin-bottom: 15px;
+            border-left: 4px solid #6366f1;
+            padding-left: 15px;
+        }
+        h4 {
+            color: #4f46e5;
+            font-size: 16px;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        th {
+            background: #6366f1;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .diagram {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre;
+            overflow-x: auto;
+            line-height: 1.4;
+        }
+        .toc {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        .toc h4 {
+            margin-top: 0;
+            color: #1a1a2e;
+        }
+        .toc ol {
+            margin-left: 20px;
+        }
+        .toc li {
+            margin: 8px 0;
+            color: #4f46e5;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .principle-box {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+            border-left: 4px solid #6366f1;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .principle-box strong {
+            color: #4f46e5;
+        }
+        ul {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        @media print {
+            body {
+                padding: 20px;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<h1>Digital Fasting Log Application</h1>
+<h2>Technical Report</h2>
+
+<div class="meta">
+    <p><strong>Course:</strong> Advanced Object-Oriented Programming</p>
+    <p><strong>Date:</strong> January 18, 2026</p>
+    <p><strong>Project:</strong> Full-Stack CRUD Application with DevContainer Support</p>
+</div>
+
+<div class="toc">
+    <h4>Table of Contents</h4>
+    <ol>
+        <li>Executive Summary</li>
+        <li>High-Level System Architecture</li>
+        <li>Frontend-Backend-Codespaces Interaction</li>
+        <li>CRUD Workflow Explanation</li>
+        <li>Object-Oriented Principles Applied</li>
+        <li>Conclusion</li>
+    </ol>
+</div>
+
+<h3>1. Executive Summary</h3>
+
+<p>The Digital Fasting Log is a full-stack web application designed to help users track their fasting journey. The application enables users to log fasting sessions, categorize them by type (Religious or Intermittent), add personal notes, and track completion status.</p>
+
+<p>The system is built using modern technologies:</p>
+<ul>
+    <li><strong>Backend:</strong> Spring Boot 3.2.1 with Java 17</li>
+    <li><strong>Frontend:</strong> React 18 with TypeScript</li>
+    <li><strong>Database:</strong> H2 In-Memory Database</li>
+    <li><strong>Development Environment:</strong> GitHub Codespaces with DevContainer</li>
+</ul>
+
+<h3>2. High-Level System Architecture</h3>
+
+<h4>2.1 Three-Tier Architecture</h4>
+
+<p>The application follows the classic <span class="highlight">Three-Tier Architecture</span> pattern, separating concerns into distinct layers:</p>
+
+<div class="diagram">┌─────────────────────────────────────────────────────────────────┐
+│                    PRESENTATION TIER                            │
+│                    (React + TypeScript)                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │  App.tsx    │  │ FastLogForm │  │ FastLogList │             │
+│  │  (State)    │  │ (Input UI)  │  │ (Display)   │             │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ HTTP/REST (JSON)
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    APPLICATION TIER                             │
+│                    (Spring Boot + Java)                         │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌────────────────┐  │
+│  │   Controller    │──│     Service     │──│   Repository   │  │
+│  │   (REST API)    │  │ (Business Logic)│  │  (Data Access) │  │
+│  └─────────────────┘  └─────────────────┘  └────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ JPA/Hibernate
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      DATA TIER                                  │
+│                   (H2 In-Memory Database)                       │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                    fast_logs table                       │   │
+│  │  (id, date, fast_type, completed, notes)                │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘</div>
+
+<h4>2.2 Component Overview</h4>
+
+<table>
+    <tr>
+        <th>Layer</th>
+        <th>Technology</th>
+        <th>Responsibility</th>
+    </tr>
+    <tr>
+        <td>Presentation</td>
+        <td>React 18 + TypeScript</td>
+        <td>User interface, state management, user input handling</td>
+    </tr>
+    <tr>
+        <td>Application</td>
+        <td>Spring Boot 3.2.1</td>
+        <td>Business logic, REST API endpoints, data validation</td>
+    </tr>
+    <tr>
+        <td>Data</td>
+        <td>H2 + JPA/Hibernate</td>
+        <td>Data persistence, query execution, transaction management</td>
+    </tr>
+</table>
+
+<h4>2.3 Backend Layered Architecture</h4>
+
+<p>The backend follows the <span class="highlight">Layered Architecture</span> pattern with clear separation:</p>
+
+<div class="diagram">┌──────────────────────────────────────────────────┐
+│              FastLogController                   │
+│         (Handles HTTP Requests/Responses)        │
+└──────────────────────┬───────────────────────────┘
+                       │ Delegates to
+                       ▼
+┌──────────────────────────────────────────────────┐
+│          FastLogService (Interface)              │
+│              FastLogServiceImpl                  │
+│           (Business Logic Layer)                 │
+└──────────────────────┬───────────────────────────┘
+                       │ Uses
+                       ▼
+┌──────────────────────────────────────────────────┐
+│             FastLogRepository                    │
+│     (Data Access Layer - Spring Data JPA)        │
+└──────────────────────┬───────────────────────────┘
+                       │ Maps to
+                       ▼
+┌──────────────────────────────────────────────────┐
+│                FastLog Entity                    │
+│            (Domain Model / POJO)                 │
+└──────────────────────────────────────────────────┘</div>
+
+<div class="page-break"></div>
+
+<h3>3. Frontend-Backend-Codespaces Interaction</h3>
+
+<h4>3.1 Communication Flow</h4>
+
+<p>The frontend and backend communicate via <span class="highlight">RESTful HTTP requests</span> using JSON as the data interchange format.</p>
+
+<div class="diagram">┌─────────────────┐         HTTP Request          ┌─────────────────┐
+│                 │  ─────────────────────────▶   │                 │
+│  React Frontend │        (JSON Body)            │  Spring Backend │
+│  (Port 3000)    │                               │  (Port 8080)    │
+│                 │  ◀─────────────────────────   │                 │
+└─────────────────┘         HTTP Response         └─────────────────┘
+                            (JSON Body)</div>
+
+<h4>3.2 API Communication Pattern</h4>
+
+<p><strong>Request Flow:</strong></p>
+<ol>
+    <li>User interacts with React component (e.g., submits form)</li>
+    <li>React calls the API service function</li>
+    <li>Fetch API sends HTTP request to backend endpoint</li>
+    <li>Spring Controller receives and validates the request</li>
+    <li>Service layer processes business logic</li>
+    <li>Repository performs database operation</li>
+    <li>Response travels back through layers to frontend</li>
+    <li>React updates UI state based on response</li>
+</ol>
+
+<h4>3.3 CORS (Cross-Origin Resource Sharing)</h4>
+
+<p>Since frontend and backend run on different ports, CORS configuration is essential:</p>
+
+<div class="diagram">Frontend (localhost:3000/3001) ──── CORS Headers ────▶ Backend (localhost:8080)
+                                    
+Allowed Origins:
+• http://localhost:3000
+• http://localhost:3001  
+• http://localhost:5173</div>
+
+<h4>3.4 GitHub Codespaces Integration</h4>
+
+<p>The DevContainer configuration enables seamless development in GitHub Codespaces:</p>
+
+<div class="diagram">┌─────────────────────────────────────────────────────────────────┐
+│                    GitHub Codespaces                            │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │                    DevContainer                            │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐   │ │
+│  │  │   Java 17   │  │  Node.js 18 │  │  Maven/npm      │   │ │
+│  │  │   (JDK)     │  │  (Runtime)  │  │  (Build Tools)  │   │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────────┘   │ │
+│  │                                                            │ │
+│  │  Port Forwarding: 8080 (Backend), 3000 (Frontend)         │ │
+│  └───────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘</div>
+
+<p><strong>DevContainer Features:</strong></p>
+<ul>
+    <li>Pre-configured Java 17 and Node.js 18 environments</li>
+    <li>Automatic dependency installation on container creation</li>
+    <li>Port forwarding for both frontend and backend</li>
+    <li>Integrated VS Code extensions for enhanced development</li>
+</ul>
+
+<div class="page-break"></div>
+
+<h3>4. CRUD Workflow Explanation</h3>
+
+<h4>4.1 CRUD Operations Overview</h4>
+
+<p>CRUD represents the four basic operations for persistent storage:</p>
+
+<table>
+    <tr>
+        <th>Operation</th>
+        <th>HTTP Method</th>
+        <th>Endpoint</th>
+        <th>Description</th>
+    </tr>
+    <tr>
+        <td><strong>C</strong>reate</td>
+        <td>POST</td>
+        <td>/api/fastlogs</td>
+        <td>Add a new fasting log</td>
+    </tr>
+    <tr>
+        <td><strong>R</strong>ead</td>
+        <td>GET</td>
+        <td>/api/fastlogs or /api/fastlogs/{id}</td>
+        <td>Retrieve log(s)</td>
+    </tr>
+    <tr>
+        <td><strong>U</strong>pdate</td>
+        <td>PUT</td>
+        <td>/api/fastlogs/{id}</td>
+        <td>Modify existing log</td>
+    </tr>
+    <tr>
+        <td><strong>D</strong>elete</td>
+        <td>DELETE</td>
+        <td>/api/fastlogs/{id}</td>
+        <td>Remove a log</td>
+    </tr>
+</table>
+
+<h4>4.2 Create Operation Workflow</h4>
+
+<div class="diagram">User fills form ──▶ Submit Button ──▶ createFastLog() API call
+                                              │
+                                              ▼
+                                    POST /api/fastlogs
+                                    Body: { date, fastType, completed, notes }
+                                              │
+                                              ▼
+                                    Controller receives request
+                                    @Valid validates input
+                                              │
+                                              ▼
+                                    Service.createFastLog()
+                                    Creates new FastLog entity
+                                              │
+                                              ▼
+                                    Repository.save(fastLog)
+                                    Persists to database
+                                              │
+                                              ▼
+                                    Returns saved entity with ID
+                                              │
+                                              ▼
+                                    Frontend updates state
+                                    New log appears in list</div>
+
+<h4>4.3 Read Operation Workflow</h4>
+
+<div class="diagram">Component mounts ──▶ useEffect() ──▶ getAllFastLogs()
+                                          │
+                                          ▼
+                                 GET /api/fastlogs
+                                          │
+                                          ▼
+                              Service.getAllFastLogs()
+                              Repository.findAllByOrderByDateDesc()
+                                          │
+                                          ▼
+                              Returns List&lt;FastLog&gt;
+                                          │
+                                          ▼
+                              Frontend sets state
+                              Renders FastLogList</div>
+
+<h4>4.4 Update Operation Workflow</h4>
+
+<div class="diagram">User clicks "Edit" ──▶ Form populates with data ──▶ User modifies ──▶ Submit
+                                                                          │
+                                                                          ▼
+                                                            PUT /api/fastlogs/{id}
+                                                            Body: updated fields
+                                                                          │
+                                                                          ▼
+                                                            Service.updateFastLog()
+                                                            Finds existing, updates fields
+                                                                          │
+                                                                          ▼
+                                                            Repository.save(updated)
+                                                                          │
+                                                                          ▼
+                                                            Frontend refreshes list</div>
+
+<h4>4.5 Delete Operation Workflow</h4>
+
+<div class="diagram">User clicks "Delete" ──▶ deleteFastLog(id) ──▶ DELETE /api/fastlogs/{id}
+                                                          │
+                                                          ▼
+                                              Service.deleteFastLog(id)
+                                              Validates existence
+                                                          │
+                                                          ▼
+                                              Repository.deleteById(id)
+                                                          │
+                                                          ▼
+                                              Returns 204 No Content
+                                                          │
+                                                          ▼
+                                              Frontend removes from state</div>
+
+<div class="page-break"></div>
+
+<h3>5. Object-Oriented Principles Applied</h3>
+
+<h4>5.1 Encapsulation</h4>
+
+<div class="principle-box">
+    <strong>Definition:</strong> Bundling data and methods that operate on that data within a single unit, hiding internal state.
+</div>
+
+<p><strong>Application in Project:</strong></p>
+<p>The <code>FastLog</code> entity encapsulates all fasting log data with private fields and controlled access:</p>
+
+<div class="diagram">┌─────────────────────────────────────────┐
+│            FastLog Entity               │
+├─────────────────────────────────────────┤
+│ - id: Long          (private)           │
+│ - date: LocalDate   (private)           │
+│ - fastType: FastType (private)          │
+│ - completed: boolean (private)          │
+│ - notes: String     (private)           │
+├─────────────────────────────────────────┤
+│ + getId(): Long                         │
+│ + setId(Long): void                     │
+│ + getDate(): LocalDate                  │
+│ + markAsCompleted(): void  ◀── Semantic │
+└─────────────────────────────────────────┘</div>
+
+<p>The <code>markAsCompleted()</code> method is a <strong>semantic method</strong> that encapsulates the business operation of completing a fast, rather than exposing raw field manipulation.</p>
+
+<h4>5.2 Abstraction</h4>
+
+<div class="principle-box">
+    <strong>Definition:</strong> Hiding complex implementation details and showing only necessary features.
+</div>
+
+<p><strong>Application in Project:</strong></p>
+
+<div class="diagram">┌─────────────────────────────────────────┐
+│       FastLogService (Interface)        │
+│         (Abstract Contract)             │
+├─────────────────────────────────────────┤
+│ + getAllFastLogs(): List&lt;FastLog&gt;       │
+│ + getFastLogById(Long): Optional        │
+│ + createFastLog(FastLog): FastLog       │
+│ + updateFastLog(Long, FastLog): FastLog │
+│ + deleteFastLog(Long): void             │
+└─────────────────────────────────────────┘
+                    ▲
+                    │ implements
+                    │
+┌─────────────────────────────────────────┐
+│       FastLogServiceImpl (Class)        │
+│      (Concrete Implementation)          │
+└─────────────────────────────────────────┘</div>
+
+<p>The Controller only knows about the <code>FastLogService</code> interface, not the implementation details. This allows easy testing with mock implementations and flexibility to change implementation without affecting consumers.</p>
+
+<h4>5.3 Inheritance</h4>
+
+<div class="principle-box">
+    <strong>Definition:</strong> Mechanism where a new class inherits properties and behaviors from an existing class.
+</div>
+
+<p><strong>Application in Project:</strong></p>
+
+<div class="diagram">┌─────────────────────────────────────────┐
+│    JpaRepository&lt;T, ID&gt; (Spring)        │
+│         (Parent Interface)              │
+├─────────────────────────────────────────┤
+│ + save(entity): T                       │
+│ + findById(id): Optional&lt;T&gt;             │
+│ + findAll(): List&lt;T&gt;                    │
+│ + deleteById(id): void                  │
+└─────────────────────────────────────────┘
+                    ▲
+                    │ extends
+                    │
+┌─────────────────────────────────────────┐
+│        FastLogRepository                │
+│       (Child Interface)                 │
+├─────────────────────────────────────────┤
+│ + findByFastType(FastType): List        │
+│ + findByCompleted(boolean): List        │
+│ + findAllByOrderByDateDesc(): List      │
+└─────────────────────────────────────────┘</div>
+
+<p><code>FastLogRepository</code> inherits all standard CRUD operations from <code>JpaRepository</code> and adds custom query methods specific to fasting logs.</p>
+
+<h4>5.4 Polymorphism</h4>
+
+<div class="principle-box">
+    <strong>Definition:</strong> Ability of objects to take multiple forms, allowing the same interface to be used for different underlying data types.
+</div>
+
+<p><strong>Application in Project:</strong></p>
+
+<div class="diagram">Controller depends on:  FastLogService (interface)
+                              │
+            ┌─────────────────┼─────────────────┐
+            ▼                 ▼                 ▼
+    FastLogServiceImpl   MockService      TestService
+    (Production)         (Testing)        (Development)</div>
+
+<p>The same <code>FastLogService</code> reference can point to different implementations - production uses <code>FastLogServiceImpl</code> with real database, while tests can use mock implementations.</p>
+
+<h4>5.5 Single Responsibility Principle (SRP)</h4>
+
+<div class="principle-box">
+    <strong>Definition:</strong> A class should have only one reason to change.
+</div>
+
+<table>
+    <tr>
+        <th>Class</th>
+        <th>Single Responsibility</th>
+    </tr>
+    <tr>
+        <td>FastLogController</td>
+        <td>Handle HTTP request/response mapping</td>
+    </tr>
+    <tr>
+        <td>FastLogServiceImpl</td>
+        <td>Execute business logic for fasting logs</td>
+    </tr>
+    <tr>
+        <td>FastLogRepository</td>
+        <td>Manage database operations</td>
+    </tr>
+    <tr>
+        <td>FastLog</td>
+        <td>Represent fasting log data structure</td>
+    </tr>
+    <tr>
+        <td>CorsConfig</td>
+        <td>Configure cross-origin settings</td>
+    </tr>
+</table>
+
+<h4>5.6 Dependency Injection (DI)</h4>
+
+<div class="principle-box">
+    <strong>Definition:</strong> Objects receive their dependencies from external sources rather than creating them internally.
+</div>
+
+<div class="diagram">┌─────────────────────────────────────────┐
+│           Spring IoC Container          │
+│  (Manages object creation & wiring)     │
+└─────────────────────────────────────────┘
+                    │
+        ┌───────────┼───────────┐
+        ▼           ▼           ▼
+   Repository    Service    Controller
+   
+   Constructor Injection Example:
+   
+   Controller(FastLogService service) {
+       this.service = service;  // Injected by Spring
+   }</div>
+
+<p><strong>Benefits:</strong></p>
+<ul>
+    <li>Loose coupling between components</li>
+    <li>Easier unit testing with mock dependencies</li>
+    <li>Centralized dependency management</li>
+</ul>
+
+<h4>5.7 Summary of OOP Principles</h4>
+
+<table>
+    <tr>
+        <th>Principle</th>
+        <th>Implementation Location</th>
+    </tr>
+    <tr>
+        <td>Encapsulation</td>
+        <td>FastLog entity (private fields, getters/setters)</td>
+    </tr>
+    <tr>
+        <td>Abstraction</td>
+        <td>FastLogService interface</td>
+    </tr>
+    <tr>
+        <td>Inheritance</td>
+        <td>FastLogRepository extends JpaRepository</td>
+    </tr>
+    <tr>
+        <td>Polymorphism</td>
+        <td>Service interface with multiple implementations</td>
+    </tr>
+    <tr>
+        <td>SRP</td>
+        <td>Separate Controller, Service, Repository classes</td>
+    </tr>
+    <tr>
+        <td>Dependency Injection</td>
+        <td>Constructor injection throughout application</td>
+    </tr>
+</table>
+
+<div class="page-break"></div>
+
+<h3>6. Conclusion</h3>
+
+<p>The Digital Fasting Log application demonstrates a well-structured full-stack implementation that adheres to modern software engineering practices:</p>
+
+<h4>Key Achievements:</h4>
+
+<ol>
+    <li><strong>Clean Architecture:</strong> Three-tier separation with clear boundaries between presentation, business logic, and data layers.</li>
+    <li><strong>RESTful Design:</strong> Proper HTTP method usage, meaningful endpoints, and JSON communication.</li>
+    <li><strong>DevContainer Support:</strong> Reproducible development environment through GitHub Codespaces integration.</li>
+    <li><strong>OOP Best Practices:</strong> Strong application of encapsulation, abstraction, inheritance, polymorphism, and SOLID principles.</li>
+    <li><strong>Type Safety:</strong> TypeScript on frontend and strongly-typed Java on backend reduce runtime errors.</li>
+</ol>
+
+<h4>Technical Stack Summary:</h4>
+
+<table>
+    <tr>
+        <th>Component</th>
+        <th>Technology</th>
+        <th>Purpose</th>
+    </tr>
+    <tr>
+        <td>Frontend</td>
+        <td>React 18 + TypeScript</td>
+        <td>Modern, type-safe UI</td>
+    </tr>
+    <tr>
+        <td>Backend</td>
+        <td>Spring Boot 3.2.1</td>
+        <td>Robust REST API</td>
+    </tr>
+    <tr>
+        <td>Database</td>
+        <td>H2 (In-Memory)</td>
+        <td>Rapid development</td>
+    </tr>
+    <tr>
+        <td>Build Tools</td>
+        <td>Maven + Vite</td>
+        <td>Efficient builds</td>
+    </tr>
+    <tr>
+        <td>Dev Environment</td>
+        <td>DevContainer</td>
+        <td>Consistent setup</td>
+    </tr>
+</table>
+
+<p>The application serves as an excellent example of how object-oriented principles translate into real-world full-stack development, providing a foundation that can be extended with additional features such as user authentication, data analytics, and cloud deployment.</p>
+
+<hr style="margin: 40px 0; border: none; border-top: 2px solid #e0e0e0;">
+
+<p style="text-align: center; color: #666; font-style: italic;">End of Report</p>
+
+</body>
+</html>

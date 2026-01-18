@@ -1,0 +1,45 @@
+{
+  "name": "Digital Fasting Log Dev Environment",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "17",
+      "installMaven": true
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    }
+  },
+  "forwardPorts": [8080, 3000],
+  "portsAttributes": {
+    "8080": {
+      "label": "Spring Boot Backend",
+      "onAutoForward": "notify"
+    },
+    "3000": {
+      "label": "React Frontend",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vmware.vscode-spring-boot",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "java.configuration.runtimes": [
+          {
+            "name": "JavaSE-17",
+            "path": "/usr/lib/jvm/msopenjdk-current",
+            "default": true
+          }
+        ]
+      }
+    }
+  },
+  "postCreateCommand": "cd backend && mvn clean install -DskipTests && cd ../frontend && npm install",
+  "postStartCommand": "echo '🌙 Digital Fasting Log environment ready! Run: cd backend && mvn spring-boot:run | cd frontend && npm run dev'"
+}
