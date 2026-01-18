@@ -13,8 +13,6 @@
 - Track completion status
 - View fasting history
 
-This project demonstrates clean architecture principles, object-oriented programming concepts, and full-stack development best practices.
-
 ---
 
 ## 🛠️ Tech Stack
@@ -33,76 +31,412 @@ This project demonstrates clean architecture principles, object-oriented program
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ High-Level System Architecture
+
+The application follows a **Three-Tier Architecture** pattern, separating concerns into distinct layers:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        CLIENT (Browser)                         │
-│                     React + TypeScript + Vite                   │
+│                    PRESENTATION TIER                            │
+│                    (React + TypeScript)                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │  App.tsx    │  │ FastLogForm │  │ FastLogList │             │
+│  │  (State)    │  │ (Input UI)  │  │ (Display)   │             │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
 │                         Port: 3000                              │
-└─────────────────────────┬───────────────────────────────────────┘
-                          │ HTTP REST API
-                          ▼
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ HTTP/REST API (JSON)
+                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    BACKEND (Spring Boot)                        │
+│                    APPLICATION TIER                             │
+│                    (Spring Boot + Java)                         │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌────────────────┐  │
+│  │   Controller    │──│     Service     │──│   Repository   │  │
+│  │   (REST API)    │  │ (Business Logic)│  │  (Data Access) │  │
+│  └─────────────────┘  └─────────────────┘  └────────────────┘  │
 │                         Port: 8080                              │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐  │
-│  │ Controller  │───▶│   Service   │───▶│    Repository       │  │
-│  │   Layer     │    │    Layer    │    │      Layer          │  │
-│  │ (REST API)  │    │  (Business) │    │  (Data Access)      │  │
-│  └─────────────┘    └─────────────┘    └──────────┬──────────┘  │
-└──────────────────────────────────────────────────┬──────────────┘
-                                                   │ JPA
-                                                   ▼
-                                    ┌──────────────────────────┐
-                                    │    H2 Database           │
-                                    │    (In-Memory)           │
-                                    └──────────────────────────┘
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ JPA/Hibernate
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      DATA TIER                                  │
+│                   (H2 In-Memory Database)                       │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                    fast_logs table                       │   │
+│  │  (id, date, fast_type, completed, notes)                │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Project Structure
+### Backend Layered Architecture
 
 ```
-digital-fasting-log/
-├── .devcontainer/
-│   └── devcontainer.json       # GitHub Codespaces configuration
-├── backend/
-│   ├── pom.xml                 # Maven dependencies
-│   └── src/main/java/com/fastinglog/
-│       ├── DigitalFastingLogApplication.java   # Entry point
-│       ├── config/
-│       │   └── CorsConfig.java                 # CORS settings
-│       ├── controller/
-│       │   └── FastLogController.java          # REST endpoints
-│       ├── model/
-│       │   ├── FastLog.java                    # JPA Entity
-│       │   └── FastType.java                   # Enum
-│       ├── repository/
-│       │   └── FastLogRepository.java          # Data access
-│       └── service/
-│           ├── FastLogService.java             # Interface
-│           └── FastLogServiceImpl.java         # Implementation
-├── frontend/
-│   ├── package.json            # Node.js dependencies
-│   ├── vite.config.ts          # Vite configuration
-│   └── src/
-│       ├── App.tsx             # Main component
-│       ├── components/
-│       │   ├── FastLogForm.tsx     # Create/Edit form
-│       │   └── FastLogList.tsx     # Display list
-│       ├── services/
-│       │   └── api.ts              # API client
-│       └── types/
-│           └── FastLog.ts          # TypeScript interfaces
-└── README.md
+┌──────────────────────────────────────────────────┐
+│              FastLogController                   │
+│         (Handles HTTP Requests/Responses)        │
+└──────────────────────┬───────────────────────────┘
+                       │ Delegates to
+                       ▼
+┌──────────────────────────────────────────────────┐
+│          FastLogService (Interface)              │
+│              FastLogServiceImpl                  │
+│           (Business Logic Layer)                 │
+└──────────────────────┬───────────────────────────┘
+                       │ Uses
+                       ▼
+┌──────────────────────────────────────────────────┐
+│             FastLogRepository                    │
+│     (Data Access Layer - Spring Data JPA)        │
+└──────────────────────┬───────────────────────────┘
+                       │ Maps to
+                       ▼
+┌──────────────────────────────────────────────────┐
+│                FastLog Entity                    │
+│            (Domain Model / POJO)                 │
+└──────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🚀 Running with GitHub Codespaces
+## 🔄 Interaction Between Frontend, Backend, and Codespaces
 
-GitHub Codespaces provides a fully configured cloud development environment.
+### Communication Flow
+
+The frontend and backend communicate via **RESTful HTTP requests** using JSON as the data interchange format:
+
+```
+┌─────────────────┐         HTTP Request          ┌─────────────────┐
+│                 │  ─────────────────────────▶   │                 │
+│  React Frontend │        (JSON Body)            │  Spring Backend │
+│  (Port 3000)    │                               │  (Port 8080)    │
+│                 │  ◀─────────────────────────   │                 │
+└─────────────────┘         HTTP Response         └─────────────────┘
+                            (JSON Body)
+```
+
+### Request-Response Pattern
+
+1. **User Action** → User interacts with React component (clicks button, submits form)
+2. **API Call** → React calls the API service function (`api.ts`)
+3. **HTTP Request** → Fetch API sends request to backend endpoint
+4. **Controller** → Spring Controller receives and validates the request
+5. **Service** → Service layer processes business logic
+6. **Repository** → Repository performs database operation
+7. **Response** → Data travels back through layers
+8. **UI Update** → React updates state and re-renders UI
+
+### CORS Configuration
+
+Since frontend (port 3000) and backend (port 8080) run on different origins, CORS is configured:
+
+```
+Allowed Origins:
+• http://localhost:3000
+• http://localhost:3001
+• http://localhost:5173
+```
+
+### GitHub Codespaces Integration
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    GitHub Codespaces                            │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │                    DevContainer                            │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐   │ │
+│  │  │   Java 17   │  │  Node.js 18 │  │  Maven/npm      │   │ │
+│  │  │   (JDK)     │  │  (Runtime)  │  │  (Build Tools)  │   │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────────┘   │ │
+│  │                                                            │ │
+│  │  ┌─────────────────────────────────────────────────────┐  │ │
+│  │  │              VS Code Extensions                      │  │ │
+│  │  │  • Java Extension Pack                               │  │ │
+│  │  │  • Spring Boot Extension Pack                        │  │ │
+│  │  │  • ESLint, Prettier                                  │  │ │
+│  │  └─────────────────────────────────────────────────────┘  │ │
+│  │                                                            │ │
+│  │  Port Forwarding: 8080 (Backend), 3000 (Frontend)         │ │
+│  └───────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**DevContainer Features:**
+- Pre-configured Java 17 and Node.js 18 environments
+- Automatic dependency installation on container creation (`postCreateCommand`)
+- Port forwarding for both frontend and backend
+- Integrated VS Code extensions for enhanced development
+
+---
+
+## 📝 CRUD Workflow Explanation
+
+CRUD stands for **Create, Read, Update, Delete** - the four fundamental operations for persistent storage.
+
+### CRUD Operations Summary
+
+| Operation | HTTP Method | Endpoint | Description |
+|-----------|-------------|----------|-------------|
+| **C**reate | POST | `/api/fastlogs` | Add a new fasting log |
+| **R**ead | GET | `/api/fastlogs` or `/api/fastlogs/{id}` | Retrieve log(s) |
+| **U**pdate | PUT | `/api/fastlogs/{id}` | Modify existing log |
+| **D**elete | DELETE | `/api/fastlogs/{id}` | Remove a log |
+
+### Create Operation
+
+```
+User fills form ──▶ Submit Button ──▶ createFastLog() API call
+                                              │
+                                              ▼
+                                    POST /api/fastlogs
+                                    Body: { date, fastType, completed, notes }
+                                              │
+                                              ▼
+                                    Controller receives request
+                                    @Valid validates input
+                                              │
+                                              ▼
+                                    Service.createFastLog()
+                                    Creates new FastLog entity
+                                              │
+                                              ▼
+                                    Repository.save(fastLog)
+                                    Persists to database
+                                              │
+                                              ▼
+                                    Returns 201 Created with saved entity
+                                              │
+                                              ▼
+                                    Frontend updates state
+                                    New log appears in list
+```
+
+### Read Operation
+
+```
+Component mounts ──▶ useEffect() ──▶ getAllFastLogs()
+                                          │
+                                          ▼
+                                 GET /api/fastlogs
+                                          │
+                                          ▼
+                              Controller.getAllFastLogs()
+                                          │
+                                          ▼
+                              Service.getAllFastLogs()
+                              Repository.findAllByOrderByDateDesc()
+                                          │
+                                          ▼
+                              Returns 200 OK with List<FastLog>
+                                          │
+                                          ▼
+                              Frontend sets state with data
+                              FastLogList renders entries
+```
+
+### Update Operation
+
+```
+User clicks "Edit" ──▶ Form populates with existing data
+                                    │
+                                    ▼
+                       User modifies fields ──▶ Submit
+                                                   │
+                                                   ▼
+                                     PUT /api/fastlogs/{id}
+                                     Body: { updated fields }
+                                                   │
+                                                   ▼
+                                     Controller.updateFastLog(id, data)
+                                                   │
+                                                   ▼
+                                     Service.updateFastLog(id, data)
+                                     Finds existing entity
+                                     Updates fields
+                                                   │
+                                                   ▼
+                                     Repository.save(updatedEntity)
+                                                   │
+                                                   ▼
+                                     Returns 200 OK with updated entity
+                                                   │
+                                                   ▼
+                                     Frontend refreshes list
+```
+
+### Delete Operation
+
+```
+User clicks "Delete" ──▶ deleteFastLog(id)
+                                │
+                                ▼
+                      DELETE /api/fastlogs/{id}
+                                │
+                                ▼
+                      Controller.deleteFastLog(id)
+                                │
+                                ▼
+                      Service.deleteFastLog(id)
+                      Validates existence
+                                │
+                                ▼
+                      Repository.deleteById(id)
+                                │
+                                ▼
+                      Returns 204 No Content
+                                │
+                                ▼
+                      Frontend removes from state
+                      Entry disappears from list
+```
+
+---
+
+## 🎯 Object-Oriented Principles Used
+
+### 1. Encapsulation
+
+**Definition:** Bundling data and methods within a single unit, hiding internal state from outside access.
+
+**Implementation:**
+```java
+// FastLog.java - Private fields with controlled access
+public class FastLog {
+    private Long id;           // Private field
+    private LocalDate date;    // Private field
+    private FastType fastType; // Private field
+    private boolean completed; // Private field
+    private String notes;      // Private field
+    
+    // Public getters/setters provide controlled access
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    // Semantic method encapsulates business operation
+    public void markAsCompleted() {
+        this.completed = true;
+    }
+}
+```
+
+### 2. Abstraction
+
+**Definition:** Hiding complex implementation details, showing only necessary features through interfaces.
+
+**Implementation:**
+```java
+// FastLogService.java - Interface defines contract
+public interface FastLogService {
+    List<FastLog> getAllFastLogs();
+    Optional<FastLog> getFastLogById(Long id);
+    FastLog createFastLog(FastLog fastLog);
+    FastLog updateFastLog(Long id, FastLog fastLog);
+    void deleteFastLog(Long id);
+}
+
+// FastLogServiceImpl.java - Concrete implementation
+@Service
+public class FastLogServiceImpl implements FastLogService {
+    // Implementation details hidden from consumers
+}
+```
+
+The Controller only knows about `FastLogService` interface, not the implementation.
+
+### 3. Inheritance
+
+**Definition:** Mechanism where a new class inherits properties and behaviors from an existing class.
+
+**Implementation:**
+```java
+// FastLogRepository inherits from JpaRepository
+public interface FastLogRepository extends JpaRepository<FastLog, Long> {
+    // Inherits: save(), findById(), findAll(), deleteById(), count(), etc.
+    
+    // Custom methods added
+    List<FastLog> findByFastType(FastType fastType);
+    List<FastLog> findByCompleted(boolean completed);
+    List<FastLog> findAllByOrderByDateDesc();
+}
+```
+
+`FastLogRepository` inherits all standard CRUD operations from `JpaRepository` and adds custom query methods.
+
+### 4. Polymorphism
+
+**Definition:** Ability of objects to take multiple forms; same interface used for different implementations.
+
+**Implementation:**
+```java
+// Controller uses interface type (not concrete class)
+@RestController
+public class FastLogController {
+    private final FastLogService fastLogService;  // Interface type
+    
+    // Spring injects FastLogServiceImpl at runtime
+    public FastLogController(FastLogService fastLogService) {
+        this.fastLogService = fastLogService;
+    }
+}
+```
+
+The same `FastLogService` reference can point to:
+- `FastLogServiceImpl` (production)
+- `MockFastLogService` (testing)
+- Different implementations for different environments
+
+### 5. Single Responsibility Principle (SRP)
+
+**Definition:** A class should have only one reason to change.
+
+**Implementation:**
+
+| Class | Single Responsibility |
+|-------|----------------------|
+| `FastLogController` | Handle HTTP request/response mapping |
+| `FastLogServiceImpl` | Execute business logic for fasting logs |
+| `FastLogRepository` | Manage database CRUD operations |
+| `FastLog` | Represent fasting log data structure |
+| `CorsConfig` | Configure cross-origin resource sharing |
+
+### 6. Dependency Injection (DI)
+
+**Definition:** Objects receive dependencies from external sources rather than creating them internally.
+
+**Implementation:**
+```java
+// Constructor Injection - Dependencies injected by Spring IoC
+@Service
+public class FastLogServiceImpl implements FastLogService {
+    private final FastLogRepository repository;  // Dependency
+    
+    // Injected by Spring, not created with 'new'
+    public FastLogServiceImpl(FastLogRepository repository) {
+        this.repository = repository;
+    }
+}
+```
+
+**Benefits:**
+- Loose coupling between components
+- Easier unit testing with mock dependencies
+- Centralized dependency management by Spring IoC Container
+
+### OOP Principles Summary Table
+
+| Principle | Where Applied | Benefit |
+|-----------|--------------|---------|
+| **Encapsulation** | FastLog entity (private fields) | Data protection, controlled access |
+| **Abstraction** | FastLogService interface | Hide implementation, define contract |
+| **Inheritance** | Repository extends JpaRepository | Code reuse, inherit CRUD operations |
+| **Polymorphism** | Controller uses interface type | Flexibility, testability |
+| **SRP** | Separate Controller/Service/Repository | Maintainability, focused classes |
+| **DI** | Constructor injection everywhere | Loose coupling, testability |
+
+---
+
+## 🚀 Running with GitHub Codespaces
 
 ### Step 1: Open in Codespaces
 
@@ -115,13 +449,13 @@ GitHub Codespaces provides a fully configured cloud development environment.
 
 The `.devcontainer` configuration will automatically:
 - Install Java 17 with Maven
-- Install Node.js 18
-- Install VS Code extensions (Java, Spring Boot, ESLint, Prettier)
+- Install Node.js 18 with npm
+- Install VS Code extensions
 - Run `mvn install` and `npm install`
 
 ### Step 3: Start the Applications
 
-Open **two terminals** in Codespaces:
+Open **two terminals**:
 
 **Terminal 1 - Backend:**
 ```bash
@@ -137,8 +471,9 @@ npm run dev
 
 ### Step 4: Access the Application
 
-- **Frontend**: Click the forwarded port `3000` link (or visit the Ports tab)
-- **Backend API**: Port `8080` is also forwarded for direct API access
+- **Frontend**: Click the forwarded port `3000` link
+- **Backend API**: Port `8080` for direct API access
+- **H2 Console**: `http://localhost:8080/h2-console`
 
 ---
 
@@ -149,7 +484,6 @@ npm run dev
 - Java 17 or higher
 - Maven 3.9 or higher
 - Node.js 18 or higher
-- npm 9 or higher
 
 ### Backend
 
@@ -158,8 +492,7 @@ cd backend
 mvn clean install
 mvn spring-boot:run
 ```
-
-The backend will start at: `http://localhost:8080`
+Backend starts at: `http://localhost:8080`
 
 ### Frontend
 
@@ -168,8 +501,7 @@ cd frontend
 npm install
 npm run dev
 ```
-
-The frontend will start at: `http://localhost:3000`
+Frontend starts at: `http://localhost:3000`
 
 ---
 
@@ -177,16 +509,16 @@ The frontend will start at: `http://localhost:3000`
 
 Base URL: `http://localhost:8080/api/fastlogs`
 
-| Method | Endpoint | Description | Request Body | Response |
-|--------|----------|-------------|--------------|----------|
-| `GET` | `/api/fastlogs` | Get all fasting logs | - | `200 OK` with array |
-| `GET` | `/api/fastlogs/{id}` | Get log by ID | - | `200 OK` or `404 Not Found` |
-| `POST` | `/api/fastlogs` | Create new log | FastLog JSON | `201 Created` |
-| `PUT` | `/api/fastlogs/{id}` | Update existing log | FastLog JSON | `200 OK` or `404 Not Found` |
-| `PATCH` | `/api/fastlogs/{id}/complete` | Mark as completed | - | `200 OK` or `404 Not Found` |
-| `DELETE` | `/api/fastlogs/{id}` | Delete a log | - | `204 No Content` or `404 Not Found` |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/fastlogs` | Get all fasting logs |
+| `GET` | `/api/fastlogs/{id}` | Get log by ID |
+| `POST` | `/api/fastlogs` | Create new log |
+| `PUT` | `/api/fastlogs/{id}` | Update existing log |
+| `PATCH` | `/api/fastlogs/{id}/complete` | Mark as completed |
+| `DELETE` | `/api/fastlogs/{id}` | Delete a log |
 
-### Example Request Body (POST/PUT)
+### Example Request Body
 
 ```json
 {
@@ -199,76 +531,37 @@ Base URL: `http://localhost:8080/api/fastlogs`
 
 ---
 
-## 📊 Data Model
+## 📂 Project Structure
 
-### FastLog Entity
-
-| Field | Type | Constraints | Description |
-|-------|------|-------------|-------------|
-| `id` | Long | Auto-generated | Primary key |
-| `date` | LocalDate | Not null | Date of the fast |
-| `fastType` | Enum | Not null | `RELIGIOUS` or `INTERMITTENT` |
-| `completed` | boolean | Default: false | Completion status |
-| `notes` | String | Max 1000 chars | Personal reflections |
-
-### FastType Enum
-
-| Value | Description |
-|-------|-------------|
-| `RELIGIOUS` | Religious fasting (Ramadan, Lent, etc.) |
-| `INTERMITTENT` | Health-focused intermittent fasting |
-
----
-
-## 🎨 Design Decisions
-
-### 1. Layered Architecture
-
-The backend follows a clean three-tier architecture:
-
-- **Controller Layer**: Handles HTTP requests/responses, input validation
-- **Service Layer**: Contains business logic, transaction management
-- **Repository Layer**: Abstracts data access using Spring Data JPA
-
-### 2. Object-Oriented Principles
-
-| Principle | Implementation |
-|-----------|----------------|
-| **Encapsulation** | Private fields with public getters/setters in entities |
-| **Abstraction** | Service interface (`FastLogService`) with separate implementation |
-| **Single Responsibility** | Each class has one focused purpose |
-| **Dependency Inversion** | Controllers depend on service interface, not implementation |
-| **Open/Closed** | Service implementation can be extended without modification |
-
-### 3. Constructor Injection
-
-All dependencies are injected via constructors rather than field injection, enabling:
-- Easier unit testing with mocks
-- Immutable dependencies
-- Clear dependency declaration
-
-### 4. RESTful API Design
-
-- Proper HTTP methods (GET, POST, PUT, PATCH, DELETE)
-- Meaningful status codes (200, 201, 204, 404)
-- Resource-based URLs (`/api/fastlogs`)
-- PATCH for partial updates (mark as completed)
-
-### 5. TypeScript for Frontend
-
-TypeScript provides:
-- Compile-time type checking
-- Better IDE support and autocompletion
-- Self-documenting code through interfaces
-- Reduced runtime errors
-
-### 6. H2 In-Memory Database
-
-Chosen for simplicity in development:
-- No external database setup required
-- Fast startup and testing
-- Automatic schema generation via JPA
-- Console available at `/h2-console`
+```
+digital-fasting-log/
+├── .devcontainer/
+│   └── devcontainer.json       # GitHub Codespaces config
+├── backend/
+│   ├── pom.xml                 # Maven dependencies
+│   └── src/main/java/com/fastinglog/
+│       ├── DigitalFastingLogApplication.java
+│       ├── config/CorsConfig.java
+│       ├── controller/FastLogController.java
+│       ├── model/
+│       │   ├── FastLog.java
+│       │   └── FastType.java
+│       ├── repository/FastLogRepository.java
+│       └── service/
+│           ├── FastLogService.java
+│           └── FastLogServiceImpl.java
+├── frontend/
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── src/
+│       ├── App.tsx
+│       ├── components/
+│       │   ├── FastLogForm.tsx
+│       │   └── FastLogList.tsx
+│       ├── services/api.ts
+│       └── types/FastLog.ts
+└── README.md
+```
 
 ---
 
